@@ -1,7 +1,21 @@
 # [PROJECT_NAME] — Automated Embedded Development Guide
 
+## Version History
+
+| Version | Date | Changes |
+|---|---|---|
+| 1.0 | 2026-05-02 | Initial template — 7-phase manual workflow with permission markers |
+| 1.1 | 2026-05-02 | Added `/github` skill — collapses Phase 2 + Phase 3 into one command |
+| 1.2 | 2026-05-02 | Added `/pio` skill — collapses Phase 4, 5, 6 into single commands |
+| 1.3 | 2026-05-02 | Added `/newproject` skill — collapses Phase 1 into one command |
+| 1.3 | 2026-05-02 | Full workflow now: `/newproject` → `/pio deploy` → `/github push` |
+
+---
+
 ## How to Use This Template
 Replace all `[PLACEHOLDERS]` with your project-specific values. Each section maps to a phase of the automated development workflow. Permission markers show where Claude Code will request approval — decide in advance whether to bypass or approve manually.
+
+> **Using skills?** See the [Automated Skills Workflow](#automated-skills-workflow) section to complete the entire process in 3 commands instead of 7 phases.
 
 ---
 
@@ -185,6 +199,70 @@ git add .
 git commit -m "[DESCRIBE_CHANGE]"
 git push
 ```
+
+---
+
+## Automated Skills Workflow
+
+Claude Code skills are slash commands that replace multiple manual terminal steps. The three skills below reduce the 7-phase manual workflow to 3 commands.
+
+### Quick Workflow (v1.3+)
+
+```
+/newproject   →   /pio deploy   →   /github push
+```
+
+| Step | Command | Replaces |
+|---|---|---|
+| 1 | `/newproject` | Phase 1 — creates folder, platformio.ini, main.cpp, .gitignore, git init, GitHub push |
+| 2 | `/pio deploy` | Phase 4 + 5 + 6 — compile, upload, open serial monitor |
+| 3 | `/github push` | Phase 7 — stage, commit, push changes to GitHub |
+
+---
+
+### `/newproject`
+
+Creates a complete PlatformIO project from scratch. Prompts for:
+- Project name, target board, feature description
+- Libraries needed
+- Whether to set up GitHub immediately
+
+**Installs to:** `C:\Users\[USERNAME]\.claude\commands\newproject.md`
+
+---
+
+### `/pio` — PlatformIO Operations
+
+| Command | What It Does | Replaces |
+|---|---|---|
+| `/pio compile` | Build firmware, report RAM/Flash usage | Phase 4 |
+| `/pio upload` | Stop monitor if running, flash to board | Phase 5 |
+| `/pio monitor` | Open serial monitor at correct baud | Phase 6 |
+| `/pio deploy` | Compile + upload + monitor in one shot | Phase 4 + 5 + 6 |
+| `/pio clean` | Clear build cache, force full recompile | — |
+| `/pio ports` | List connected serial devices | — |
+
+**Installs to:** `C:\Users\[USERNAME]\.claude\commands\pio.md`
+
+---
+
+### `/github` — GitHub Operations
+
+| Command | What It Does | Replaces |
+|---|---|---|
+| `/github init` | Create .gitignore, git init, commit, add remote, push | Phase 2 + 3 |
+| `/github push` | Stage all, ask for commit message, push | Phase 7 git block |
+| `/github status` | Show branch, changes, last 10 commits | Manual git log |
+| `/github sync` | Pull latest from remote | — |
+| `/github branch` | Create and switch to a new branch | — |
+
+**Installs to:** `C:\Users\[USERNAME]\.claude\commands\github.md`
+
+---
+
+### Installing Skills
+
+All skill files live in `C:\Users\[USERNAME]\.claude\commands\`. Restart Claude Code after adding or editing a skill file for it to take effect. Type `/skills` in the chat to see all available skills.
 
 ---
 
