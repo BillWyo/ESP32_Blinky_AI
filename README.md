@@ -104,6 +104,63 @@ Released COM4, re-flashed after reverting to GPIO 2. **SUCCESS** — LED confirm
 
 ---
 
+## Permissions & Bypass Mode
+
+Claude Code asks for permission before running each tool. This can be bypassed when you know exactly what Claude is about to do.
+
+### Enabling Bypass Permissions
+
+**Via settings.json** (`C:\Users\johan\.claude\settings.json`):
+```json
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  }
+}
+```
+
+**At startup:**
+```powershell
+claude --dangerously-skip-permissions
+```
+
+**Via chat:**
+Type `/config` and set `defaultMode` to `bypassPermissions`.
+
+### Permission Modes
+
+| Mode | Behavior |
+|---|---|
+| `default` | Prompts for each new tool or command |
+| `acceptEdits` | Auto-allows file edits, prompts for Bash |
+| `bypassPermissions` | No prompts — Claude runs everything automatically |
+
+### When It Is Safe to Bypass
+
+| Scenario | Safe? | Reason |
+|---|---|---|
+| Compiling firmware | Yes | Code already reviewed, fully reversible |
+| Uploading firmware to your own board | Yes | Known code, personal hardware |
+| Routine git commit & push (personal repo) | Yes | Low risk, you control the repo |
+| Creating a new project structure | Yes | Fully reversible |
+| Running serial monitor | Yes | Read-only, nothing is changed |
+| Reformatting or renaming files | Yes | Cosmetic, reversible |
+| Deleting files or folders | **No** | Irreversible — one wrong path loses work |
+| Pushing to a shared or production repo | **No** | Affects other people |
+| Running unfamiliar scripts | **No** | Unknown behavior |
+| Modifying system files or OS config | **No** | Can destabilize your machine |
+| Installing packages | **No** | Supply chain attack risk |
+| Flashing unknown firmware | **No** | Can brick hardware |
+
+### Rule of Thumb
+
+> Bypass when you know exactly what Claude is about to do.
+> Keep prompts on when exploring, experimenting, or working near anything shared or irreversible.
+
+For this project — compile, upload, serial monitor, and git commits are all good candidates for bypass mode.
+
+---
+
 ## Terminal Color & Symbol Reference
 
 Claude Code uses ANSI color codes and symbols in the terminal to communicate status at a glance. The table below explains each color and symbol used throughout this project.
