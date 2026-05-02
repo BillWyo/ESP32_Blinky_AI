@@ -16,6 +16,10 @@ Create a simple LED blink program for an ESP32 DevKitC V4 using AI assistance (C
 ## Terminal Operations
 
 ### 1. Project Setup
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Create new directory
+
 ```powershell
 New-Item -ItemType Directory -Path "c:\Users\johan\Documents\PlatformIO\Projects\ESP32_Blinky_AI\src" -Force
 ```
@@ -24,6 +28,10 @@ Created the PlatformIO project folder structure.
 ---
 
 ### 2. Git Initialization
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `Bash` — Run git init, add, commit
+
 ```powershell
 cd "c:\Users\johan\Documents\PlatformIO\Projects\ESP32_Blinky_AI"
 git init
@@ -35,6 +43,10 @@ Initialized local git repository and made the first commit.
 ---
 
 ### 3. GitHub Remote & Push
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `Bash` — Add remote origin and push to GitHub
+
 ```powershell
 git remote add origin https://github.com/BillWyo/ESP32_Blinky_AI.git
 git branch -M main
@@ -45,6 +57,10 @@ Linked to GitHub and pushed. Authenticated via Personal Access Token.
 ---
 
 ### 4. Compile
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Run PlatformIO build
+
 ```powershell
 & "C:\Users\johan\.platformio\penv\Scripts\pio.exe" run
 ```
@@ -53,6 +69,10 @@ Linked to GitHub and pushed. Authenticated via Personal Access Token.
 ---
 
 ### 5. Upload to ESP32
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Flash firmware to ESP32 on COM4
+
 ```powershell
 & "C:\Users\johan\.platformio\penv\Scripts\pio.exe" run --target upload
 ```
@@ -61,6 +81,10 @@ Auto-detected **COM4**, flashed in ~12 seconds. **SUCCESS**
 ---
 
 ### 6. Serial Monitor
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Open serial monitor on COM4
+
 ```powershell
 & "C:\Users\johan\.platformio\penv\Scripts\pio.exe" device monitor --port COM4 --baud 115200
 ```
@@ -69,6 +93,10 @@ Confirmed output: `LED ON` / `LED OFF` every 500ms.
 ---
 
 ### 7. Stop Serial Monitor & Re-upload (LED pin fix)
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Re-flash firmware after LED pin fix
+
 ```powershell
 & "C:\Users\johan\.platformio\penv\Scripts\pio.exe" run --target upload
 ```
