@@ -76,6 +76,60 @@ Released COM4, re-flashed after reverting to GPIO 2. **SUCCESS** — LED confirm
 
 ---
 
+## Terminal Color & Symbol Reference
+
+Claude Code uses ANSI color codes and symbols in the terminal to communicate status at a glance. The table below explains each color and symbol used throughout this project.
+
+### Colors
+
+| Color | ANSI Code | Meaning | Used For |
+|---|---|---|---|
+| Yellow (Bright) | `\e[93m` | Caution / Attention | Permission requests, warnings |
+| Green | `\e[32m` | Success | Build passed, upload complete |
+| Red | `\e[31m` | Failure / Error | Build errors, upload failures |
+| Cyan | `\e[36m` | Information | Status messages, serial output |
+| White (Default) | `\e[0m` | Reset | Returns terminal to normal color |
+
+### Symbols
+
+| Symbol | Meaning |
+|---|---|
+| `***` | High priority alert (e.g. permission requested) |
+| `=` (repeated) | Section divider / visual separator |
+| `[SUCCESS]` | Operation completed without errors |
+| `[FAILED]` | Operation encountered an error |
+| `>>>` | Progress indicator during flash/upload |
+| `*` (percentage) | Memory usage bar during compile |
+
+### Permission Hook Marker
+
+Whenever Claude Code needs your approval to run a command, a bright yellow banner appears:
+
+```
+============================================================
+  *** PERMISSION REQUESTED ***  Tool: Bash
+============================================================
+```
+
+This is triggered by the `PermissionRequest` hook configured in `~/.claude/settings.json`. The tool name shown tells you exactly which tool is asking for permission before you approve or deny it.
+
+### ANSI Color Code Quick Reference
+
+| Code | Effect |
+|---|---|
+| `\e[0m` | Reset all formatting |
+| `\e[1m` | Bold |
+| `\e[31m` | Red text |
+| `\e[32m` | Green text |
+| `\e[33m` | Yellow text |
+| `\e[36m` | Cyan text |
+| `\e[91m` | Bright red |
+| `\e[92m` | Bright green |
+| `\e[93m` | Bright yellow |
+| `\e[96m` | Bright cyan |
+
+---
+
 ## Key Facts
 
 | Item | Value |
