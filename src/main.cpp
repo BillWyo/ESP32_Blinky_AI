@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#define LED_PIN 2  // Built-in LED on most ESP32 dev boards
+#define LED_PIN 2
 
 void setup() {
   Serial.begin(115200);

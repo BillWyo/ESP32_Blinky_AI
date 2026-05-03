@@ -9,6 +9,7 @@
 | 1.2 | 2026-05-02 | Added `/pio` skill — collapses Phase 4, 5, 6 into single commands |
 | 1.3 | 2026-05-02 | Added `/newproject` skill — collapses Phase 1 into one command |
 | 1.3 | 2026-05-02 | Full workflow now: `/newproject` → `/pio deploy` → `/github push` |
+| 1.4 | 2026-05-02 | Added advanced multi-sensor example (ESP32_PTH) with diagnostics |
 
 ---
 
@@ -327,6 +328,235 @@ Save to `C:\Users\[USERNAME]\.claude\settings.json` for global effect, or `.clau
 | Key pin(s) | `[PIN_ASSIGNMENTS]` |
 | GitHub repo | `https://github.com/[GITHUB_USERNAME]/[REPO_NAME]` |
 | PlatformIO CLI | `C:\Users\[USERNAME]\.platformio\penv\Scripts\pio.exe` |
+
+---
+
+## Advanced Example — ESP32_PTH (Multi-Sensor Weather Station)
+
+**Project:** Read barometric pressure, ambient temperature, and relative humidity from a DHT11 and BMP280, display results on an SSD1306 OLED. Board: ESP32-S3-Zero.
+**Repo:** https://github.com/BillWyo/ESP32_PTH
+
+This example is more complex than a basic blink — it involves multiple I2C devices, unit conversions, display alignment, and a hardware debug session.
+
+---
+
+### Phase 1 — Project Setup
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Create project directory
+
+```powershell
+New-Item -ItemType Directory -Path "c:\Users\johan\Documents\PlatformIO\Projects\ESP32_PTH\src" -Force
+```
+
+`platformio.ini` — based on a known-working config for the ESP32-S3-Zero:
+```ini
+[env:esp32-s3-billybob]
+platform = espressif32@6.5.0
+board = esp32-s3-devkitc-1
+framework = arduino
+board_upload.flash_size = 4MB
+board_upload.maximum_size = 4194304
+board_build.arduino.memory_type = qio_qspi
+board_build.flash_mode = qio
+board_build.partitions = default.csv
+build_flags =
+    -DARDUINO_USB_CDC_ON_BOOT=1
+monitor_speed = 9600
+lib_deps =
+    adafruit/DHT sensor library@^1.4.6
+    adafruit/Adafruit BMP280 Library@^2.6.8
+    adafruit/Adafruit SSD1306@^2.5.15
+    adafruit/Adafruit GFX Library@^1.11.9
+```
+
+> **Note:** No specific PlatformIO board ID exists for the ESP32-S3-Zero. `esp32-s3-devkitc-1` is the correct generic target. The extra `board_upload` and `board_build` flags are required for the 4MB flash variant.
+
+> **Note:** `monitor_speed = 9600` is used because `-DARDUINO_USB_CDC_ON_BOOT=1` routes Serial over native USB CDC — baud rate is cosmetic but must match the monitor setting.
+
+---
+
+### Phase 2 — Git Initialization
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `Bash` — Initialize git repository
+
+```powershell
+cd "c:\Users\johan\Documents\PlatformIO\Projects\ESP32_PTH"
+git init
+git add .
+git commit -m "Initial commit - ESP32-S3 PT&H monitor (pressure, temperature, humidity)"
+```
+
+---
+
+### Phase 3 — GitHub Remote & Push
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `Bash` — Push to GitHub
+
+```powershell
+git remote add origin https://github.com/BillWyo/ESP32_PTH.git
+git branch -M main
+git push -u origin main
+```
+
+---
+
+### Phase 4 — Compile
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Run PlatformIO build
+
+```powershell
+& "C:\Users\johan\.platformio\penv\Scripts\pio.exe" run
+```
+
+PlatformIO auto-downloaded all libraries on first compile:
+- `DHT sensor library@1.4.7` + `Adafruit Unified Sensor@1.1.15`
+- `Adafruit BMP280 Library@2.6.8` + `Adafruit BusIO@1.17.4`
+- `Adafruit SSD1306@2.5.16` + `Adafruit GFX Library@1.12.6`
+
+**Result:** SUCCESS — RAM 5.9%, Flash 23.0%
+
+---
+
+### Phase 5 — Upload & Initial Verification
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Flash firmware to board
+
+```powershell
+& "C:\Users\johan\.platformio\penv\Scripts\pio.exe" run --target upload
+```
+
+Auto-detected **COM5**. Serial monitor confirmed sensors reading:
+```
+Temp: 23.0C  Humidity: 32.0%  Pressure: 855.7hPa  BMP Temp: 25.1C
+```
+
+**Issue found:** SSD1306 display showed no output.
+
+---
+
+### Diagnostic — I2C Address Scanner
+
+The SSD1306 was not displaying despite serial output working. A dedicated I2C scanner sketch was flashed to identify all devices on the bus.
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Upload diagnostic firmware
+
+```powershell
+& "C:\Users\johan\.platformio\penv\Scripts\pio.exe" run --target upload
+& "C:\Users\johan\.platformio\penv\Scripts\pio.exe" device monitor
+```
+
+**First scan result** (wiring issue present):
+```
+Found device at 0x76       ← BMP280 only. SSD1306 missing.
+```
+
+**Root cause:** SSD1306 wiring fault. After correction, second scan:
+```
+Found device at 0x3C       ← SSD1306 confirmed
+Found device at 0x76       ← BMP280 confirmed
+```
+
+> **USB CDC timing note:** On ESP32-S3 with `-DARDUINO_USB_CDC_ON_BOOT=1`, the USB port re-enumerates after each reset. Using `while(!Serial)` to wait for serial connection blocked indefinitely. Fix: put the scanner in `loop()` so it repeats every 5 seconds and is always catchable by the monitor.
+
+```cpp
+void loop() {
+  scanI2C();
+  delay(5000);
+}
+```
+
+---
+
+### Phase 6 — Iterative Updates
+
+After hardware was confirmed working, three successive updates were pushed:
+
+**Update 1 — PSI conversion**
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `PowerShell` — Re-upload after unit change
+
+```cpp
+float pressure = bmp.readPressure() * 0.000145038F;  // Pa -> PSI
+```
+```
+Pressure: 12.40 PSI
+```
+
+**Update 2 — Fahrenheit conversion**
+```cpp
+float tempF    = tempC   * 1.8F + 32.0F;
+float bmpTempF = bmpTemp * 1.8F + 32.0F;
+```
+```
+Temp: 71.6F   BMP Temp: 74.9F
+```
+
+**Update 3 — Display alignment**
+
+Used separate `setCursor()` calls for labels and values, with `VALUE_X = 48` (8 chars × 6px) to align all value columns:
+
+```cpp
+const int VALUE_X = 48;
+display.setCursor(0, 0);        display.print("Temp F:");
+display.setCursor(VALUE_X, 0);  display.print("71.6 F");
+
+display.setCursor(0, 16);        display.print("Humid:");
+display.setCursor(VALUE_X, 16);  display.print("33.0 %");
+```
+
+Final display layout:
+```
+Temp F: 71.6 F
+Humid:  33.0 %
+Press:  12.40 PSI
+BMP F:  74.9 F
+```
+
+---
+
+### Final Push
+
+> [!WARNING]
+> **PERMISSION REQUESTED** — Tool: `Bash` — Push all changes
+
+```powershell
+git add .
+git commit -m "Convert pressure to PSI, temperatures to F, align display values"
+git push
+```
+
+---
+
+### Key Facts — ESP32_PTH
+
+| Item | Value |
+|---|---|
+| Board | ESP32-S3 rev 0.2 |
+| Upload port | COM5 |
+| Baud rate | 9600 (USB CDC) |
+| DHT11 pin | GPIO 10 (module has internal pull-up) |
+| I2C SDA | GPIO 8 |
+| I2C SCL | GPIO 9 |
+| SSD1306 address | 0x3C |
+| BMP280 address | 0x76 |
+| Read interval | 2000ms (DHT11 max 1Hz) |
+| GitHub repo | https://github.com/BillWyo/ESP32_PTH |
+
+### Lessons Learned
+
+| Issue | Cause | Fix |
+|---|---|---|
+| SSD1306 no output | Wiring fault — SDA/SCL disconnected | Corrected wiring, confirmed with I2C scanner |
+| I2C scanner no serial output | USB CDC re-enumerates on reset, scanner ran before monitor connected | Move scan to `loop()` with 5s repeat |
+| `while(!Serial)` blocking | ESP32-S3 USB CDC doesn't always set Serial true | Use `delay()` or repeating loop instead |
+| Display values misaligned | String padding unreliable across value widths | Use separate `setCursor()` for label and value |
 
 ---
 
